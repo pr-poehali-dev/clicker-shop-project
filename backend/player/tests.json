@@ -1,0 +1,31 @@
+{
+  "tests": [
+    {
+      "name": "Create or get player",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "playerId": "test-player-123",
+        "nickname": "ТестовыйИгрок"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Update player stats",
+      "method": "PUT",
+      "path": "/",
+      "body": {
+        "playerId": "test-player-123",
+        "totalClicks": 1000,
+        "clickPower": 5
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Get leaderboard",
+      "method": "GET",
+      "path": "/?action=leaderboard",
+      "expectedStatus": 200
+    }
+  ]
+}
