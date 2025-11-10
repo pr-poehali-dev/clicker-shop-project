@@ -5,10 +5,10 @@
       "method": "POST",
       "path": "/",
       "body": {
-        "playerId": "test-player-123",
-        "nickname": "ТестовыйИгрок"
+        "playerId": "test-player-new-987",
+        "nickname": "НовыйИгрок"
       },
-      "expectedStatus": 200
+      "expectedStatus": 201
     },
     {
       "name": "Update player stats",

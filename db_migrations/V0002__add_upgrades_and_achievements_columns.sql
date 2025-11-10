@@ -1,0 +1,3 @@
+ALTER TABLE players 
+ADD COLUMN IF NOT EXISTS upgrades JSONB DEFAULT '[]'::jsonb,
+ADD COLUMN IF NOT EXISTS achievements JSONB DEFAULT '[]'::jsonb;

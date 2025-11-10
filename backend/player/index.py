@@ -80,7 +80,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
                 
                 cursor.execute('''
-                    SELECT nickname, total_clicks, click_power, auto_click_rate
+                    SELECT nickname, total_clicks, click_power, auto_click_rate, upgrades, achievements
                     FROM players
                     WHERE player_id = %s
                 ''', (player_id,))
@@ -90,11 +90,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 conn.close()
                 
                 if row:
+                    upgrades_data = row[4] if row[4] else []
+                    achievements_data = row[5] if row[5] else []
+                    
                     player_data = {
                         'nickname': row[0],
                         'totalClicks': int(row[1]),
                         'clickPower': int(row[2]),
-                        'autoClickRate': float(row[3])
+                        'autoClickRate': float(row[3]),
+                        'upgrades': upgrades_data,
+                        'achievements': achievements_data
                     }
                     return {
                         'statusCode': 200,
@@ -204,6 +209,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if 'autoClickRate' in body_data:
                 update_fields.append('auto_click_rate = %s')
                 params.append(float(body_data['autoClickRate']))
+            if 'upgrades' in body_data:
+                update_fields.append('upgrades = %s')
+                params.append(json.dumps(body_data['upgrades']))
+            if 'achievements' in body_data:
+                update_fields.append('achievements = %s')
+                params.append(json.dumps(body_data['achievements']))
             
             update_fields.append('updated_at = CURRENT_TIMESTAMP')
             params.append(player_id)
@@ -212,7 +223,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 UPDATE players
                 SET {', '.join(update_fields)}
                 WHERE player_id = %s
-                RETURNING nickname, total_clicks, click_power, auto_click_rate
+                RETURNING nickname, total_clicks, click_power, auto_click_rate, upgrades, achievements
             '''
             
             cursor.execute(query, params)
@@ -222,6 +233,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             
             if row:
+                upgrades_data = row[4] if row[4] else []
+                achievements_data = row[5] if row[5] else []
+                
                 return {
                     'statusCode': 200,
                     'headers': {
@@ -233,7 +247,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'nickname': row[0],
                         'totalClicks': int(row[1]),
                         'clickPower': int(row[2]),
-                        'autoClickRate': float(row[3])
+                        'autoClickRate': float(row[3]),
+                        'upgrades': upgrades_data,
+                        'achievements': achievements_data
                     })
                 }
             else:

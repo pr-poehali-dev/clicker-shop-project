@@ -148,6 +148,26 @@ const Index = () => {
           setClicks(data.totalClicks || 0);
           setClickPower(data.clickPower || 1);
           setAutoClickRate(data.autoClickRate || 0);
+          
+          if (data.upgrades && Array.isArray(data.upgrades)) {
+            setUpgrades((prev) =>
+              prev.map((upgrade) => {
+                const savedUpgrade = data.upgrades.find((u: any) => u.id === upgrade.id);
+                return savedUpgrade ? { ...upgrade, owned: savedUpgrade.owned } : upgrade;
+              })
+            );
+          }
+          
+          if (data.achievements && Array.isArray(data.achievements)) {
+            setAchievements((prev) =>
+              prev.map((achievement) => {
+                const savedAchievement = data.achievements.find((a: any) => a.id === achievement.id);
+                return savedAchievement 
+                  ? { ...achievement, unlocked: savedAchievement.unlocked, progress: savedAchievement.progress }
+                  : achievement;
+              })
+            );
+          }
         } else {
           await fetch(API_URL, {
             method: 'POST',
@@ -162,20 +182,21 @@ const Index = () => {
     loadPlayer();
   }, [playerId]);
 
-  useEffect(() => {
-    const loadLeaderboard = async () => {
-      try {
-        const response = await fetch(`${API_URL}/?action=leaderboard`);
-        if (response.ok) {
-          const data = await response.json();
-          setLeaderboard(data.leaderboard || []);
-        }
-      } catch (error) {
-        console.error('Failed to load leaderboard:', error);
+  const loadLeaderboard = async () => {
+    try {
+      const response = await fetch(`${API_URL}/?action=leaderboard`);
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data.leaderboard || []);
       }
-    };
+    } catch (error) {
+      console.error('Failed to load leaderboard:', error);
+    }
+  };
+
+  useEffect(() => {
     loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 30000);
+    const interval = setInterval(loadLeaderboard, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -189,26 +210,31 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [autoClickRate]);
 
+  const savePlayerData = async () => {
+    try {
+      await fetch(API_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerId,
+          nickname,
+          totalClicks: Math.floor(totalClicks),
+          clickPower,
+          autoClickRate,
+          upgrades: upgrades.map(u => ({ id: u.id, owned: u.owned })),
+          achievements: achievements.map(a => ({ id: a.id, unlocked: a.unlocked, progress: a.progress })),
+        }),
+      });
+      await loadLeaderboard();
+    } catch (error) {
+      console.error('Failed to save player data:', error);
+    }
+  };
+
   useEffect(() => {
-    const saveInterval = setInterval(async () => {
-      try {
-        await fetch(API_URL, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            playerId,
-            nickname,
-            totalClicks: Math.floor(totalClicks),
-            clickPower,
-            autoClickRate,
-          }),
-        });
-      } catch (error) {
-        console.error('Failed to save player data:', error);
-      }
-    }, 5000);
+    const saveInterval = setInterval(savePlayerData, 3000);
     return () => clearInterval(saveInterval);
-  }, [playerId, nickname, totalClicks, clickPower, autoClickRate]);
+  }, [playerId, nickname, totalClicks, clickPower, autoClickRate, upgrades, achievements]);
 
   useEffect(() => {
     setAchievements((prev) =>
@@ -280,6 +306,11 @@ const Index = () => {
         body: JSON.stringify({
           playerId,
           nickname: newNickname.trim(),
+          totalClicks: Math.floor(totalClicks),
+          clickPower,
+          autoClickRate,
+          upgrades: upgrades.map(u => ({ id: u.id, owned: u.owned })),
+          achievements: achievements.map(a => ({ id: a.id, unlocked: a.unlocked, progress: a.progress })),
         }),
       });
       if (response.ok) {
@@ -287,6 +318,7 @@ const Index = () => {
         setNewNickname('');
         setSettingsOpen(false);
         toast.success('Ник изменён!');
+        await loadLeaderboard();
       }
     } catch (error) {
       toast.error('Ошибка при изменении ника');
