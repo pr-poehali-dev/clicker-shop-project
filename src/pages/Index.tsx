@@ -413,7 +413,7 @@ const Index = () => {
                   }`}
                 >
                   <img
-                    src="https://cdn.poehali.dev/files/726e1617-e912-40be-a3cd-37c964626b88.png"
+                    src="https://i.ibb.co/jPZtrC3w/image.png"
                     alt="NO Character"
                     className="w-64 h-64 object-contain drop-shadow-2xl animate-float cursor-pointer"
                   />
